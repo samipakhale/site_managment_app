@@ -1,0 +1,39 @@
+name: site_management_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sqflite: ^2.3.0
+  sqflite_common_ffi: ^2.3.3
+  path: ^1.8.3
+  shared_preferences: ^2.2.2
+  pdf: ^3.10.4
+  printing: ^5.11.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: "^0.13.1"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/app_logo.png
+
+flutter_launcher_icons:
+  image_path: "assets/images/Site Managment.png"
+  android: true
+  ios: true
+
+analyzer:
+  errors:
+    use_build_context_synchronously: ignore
