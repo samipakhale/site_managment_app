@@ -57,25 +57,21 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
   final List<String> _materialOptions = ['Sand', 'Agg', 'Steel', 'Cement', 'Bitumin'];
   final List<String> _equipmentOptions = ['J.C.B (Per Hr.)', 'Poclain (Per Hr.)', 'Tractor (Halday / Days)', 'Tanker (Nos.)'];
+  final List<String> _equipmentUnitOptions = ['Hours (Hrs)', 'Days', 'Nos'];
+  final List<String> _vendorStatusOptions = ['Paid', 'Pending'];
+  final List<String> _labourStatusOptions = ['Present (Full Day)', 'Half Day', 'Absent'];
+  final List<String> _labourPaymentStatusOptions = ['Paid', 'Pending'];
+  final List<String> _otherCategoryOptions = ['Tea / Nashta', 'Transport / Travel', 'Stationery', 'Miscellaneous'];
+  final List<String> _paymentModeOptions = ['Cash', 'Online / UPI'];
   
   String? _selectedSubMaterial;
   String? _selectedSubEquipment;
-
-  String _getUnitHintForMaterial(String material) {
-    switch (material) {
-      case 'Sand':
-      case 'Agg':
-        return 'Unit (Brass madhe)';
-      case 'Steel':
-        return 'Unit (Kg / Tons madhe)';
-      case 'Cement':
-        return 'Unit (Bags madhe)';
-      case 'Bitumin':
-        return 'Unit (Drums / Litres)';
-      default:
-        return 'Unit / Qty';
-    }
-  }
+  String? _selectedEquipmentUnit;
+  String? _selectedVendorStatus;
+  String? _selectedLabourStatus;
+  String? _selectedLabourPaymentStatus;
+  String? _selectedOtherCategory;
+  String? _selectedPaymentMode;
 
   double _calculateTotalAmount() {
     double total = 0.0;
@@ -149,6 +145,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       _selectedSubMaterial = isEditing ? existingExpense['title'] : _materialOptions.first;
     } else if (widget.categoryTitle == 'Equipment') {
       _selectedSubEquipment = isEditing ? existingExpense['title'] : _equipmentOptions.first;
+      _selectedEquipmentUnit = _equipmentUnitOptions.first;
+    } else if (widget.categoryTitle == 'Vendor') {
+      _selectedVendorStatus = _vendorStatusOptions.first;
+    } else if (widget.categoryTitle == 'Labour') {
+      _selectedLabourStatus = _labourStatusOptions.first;
+      _selectedLabourPaymentStatus = _labourPaymentStatusOptions.first;
+    } else if (widget.categoryTitle == 'Other') {
+      _selectedOtherCategory = _otherCategoryOptions.first;
+      _selectedPaymentMode = _paymentModeOptions.first;
     }
 
     final TextEditingController titleController = TextEditingController(text: isEditing ? existingExpense['title'] : '');
@@ -183,26 +188,22 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, dialogSetState) {
-          String currentMaterial = _selectedSubMaterial ?? _materialOptions.first;
-          String dynamicQtyHint = widget.categoryTitle == 'Material' 
-              ? _getUnitHintForMaterial(currentMaterial) 
-              : (widget.categoryTitle == 'Equipment' ? 'Vapar (Hours / Days / Nos)' : 'Unit / Qty');
-
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
-              isEditing ? '${widget.categoryTitle} Edit ' : '${widget.categoryTitle} Add New Expense', 
+              isEditing ? '${widget.categoryTitle} Edit' : '${widget.categoryTitle} Add New Expense', 
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1E293B)),
             ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // 👉 Material Dropdown
                   if (widget.categoryTitle == 'Material') ...[
                     DropdownButtonFormField<String>(
                       initialValue: _selectedSubMaterial,
                       decoration: InputDecoration(
-                        labelText: ' Select Material ',
+                        labelText: 'Select Material',
                         filled: true,
                         fillColor: Colors.grey[100],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -210,14 +211,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       items: _materialOptions.map((String opt) {
                         return DropdownMenuItem<String>(value: opt, child: Text(opt));
                       }).toList(),
-                      onChanged: (String? val) {
-                        dialogSetState(() {
-                          _selectedSubMaterial = val;
-                        });
-                      },
+                      onChanged: (String? val) => dialogSetState(() => _selectedSubMaterial = val),
                     ),
                     const SizedBox(height: 14),
-                  ] else if (widget.categoryTitle == 'Equipment') ...[
+                  ] 
+                  // 👉 Equipment Dropdown
+                  else if (widget.categoryTitle == 'Equipment') ...[
                     DropdownButtonFormField<String>(
                       initialValue: _selectedSubEquipment,
                       decoration: InputDecoration(
@@ -232,7 +231,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       onChanged: (String? val) => dialogSetState(() => _selectedSubEquipment = val),
                     ),
                     const SizedBox(height: 14),
-                  ] else if (widget.categoryTitle == 'Labour') ...[
+                  ] 
+                  // 👉 Labour Name & Status Dropdowns
+                  else if (widget.categoryTitle == 'Labour') ...[
                     TextField(
                       controller: titleController,
                       decoration: InputDecoration(
@@ -243,7 +244,37 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                  ] else if (widget.categoryTitle == 'Vendor') ...[
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedLabourStatus,
+                      decoration: InputDecoration(
+                        labelText: 'Attendance / Shift Status',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: _labourStatusOptions.map((String opt) {
+                        return DropdownMenuItem<String>(value: opt, child: Text(opt));
+                      }).toList(),
+                      onChanged: (String? val) => dialogSetState(() => _selectedLabourStatus = val),
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedLabourPaymentStatus,
+                      decoration: InputDecoration(
+                        labelText: 'Payment Status',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: _labourPaymentStatusOptions.map((String opt) {
+                        return DropdownMenuItem<String>(value: opt, child: Text(opt));
+                      }).toList(),
+                      onChanged: (String? val) => dialogSetState(() => _selectedLabourPaymentStatus = val),
+                    ),
+                    const SizedBox(height: 14),
+                  ] 
+                  // 👉 Vendor Name & Status
+                  else if (widget.categoryTitle == 'Vendor') ...[
                     TextField(
                       controller: titleController,
                       decoration: InputDecoration(
@@ -254,7 +285,37 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                  ] else ...[
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedVendorStatus,
+                      decoration: InputDecoration(
+                        labelText: 'Payment Status',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: _vendorStatusOptions.map((String opt) {
+                        return DropdownMenuItem<String>(value: opt, child: Text(opt));
+                      }).toList(),
+                      onChanged: (String? val) => dialogSetState(() => _selectedVendorStatus = val),
+                    ),
+                    const SizedBox(height: 14),
+                  ] 
+                  // 👉 Other Expenses Category & Title
+                  else if (widget.categoryTitle == 'Other') ...[
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedOtherCategory,
+                      decoration: InputDecoration(
+                        labelText: 'Expense Category',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: _otherCategoryOptions.map((String opt) {
+                        return DropdownMenuItem<String>(value: opt, child: Text(opt));
+                      }).toList(),
+                      onChanged: (String? val) => dialogSetState(() => _selectedOtherCategory = val),
+                    ),
+                    const SizedBox(height: 14),
                     TextField(
                       controller: titleController,
                       decoration: InputDecoration(
@@ -267,11 +328,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     const SizedBox(height: 14),
                   ],
 
-                  if (widget.categoryTitle == 'Material' || widget.categoryTitle == 'Equipment') ...[
+                  // 👉 Material Quantity Field
+                  if (widget.categoryTitle == 'Material') ...[
                     TextField(
                       controller: qtyController,
                       decoration: InputDecoration(
-                        labelText: dynamicQtyHint,
+                        labelText: 'Unit (Brass / Bags / Tons)',
                         filled: true,
                         fillColor: Colors.grey[100],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -280,6 +342,36 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     const SizedBox(height: 14),
                   ],
 
+                  // 👉 Equipment Quantity & Clean Unit Dropdown Fix
+                  if (widget.categoryTitle == 'Equipment') ...[
+                    TextField(
+                      controller: qtyController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Vapar Quantity (e.g. 10)',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedEquipmentUnit,
+                      decoration: InputDecoration(
+                        labelText: 'Select Unit Type',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: _equipmentUnitOptions.map((String opt) {
+                        return DropdownMenuItem<String>(value: opt, child: Text(opt));
+                      }).toList(),
+                      onChanged: (String? val) => dialogSetState(() => _selectedEquipmentUnit = val),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // 👉 Amount Field
                   TextField(
                     controller: amountController,
                     keyboardType: TextInputType.number,
@@ -291,6 +383,26 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
+
+                  // 👉 Payment Mode for Other Expenses
+                  if (widget.categoryTitle == 'Other') ...[
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedPaymentMode,
+                      decoration: InputDecoration(
+                        labelText: 'Payment Mode',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      items: _paymentModeOptions.map((String opt) {
+                        return DropdownMenuItem<String>(value: opt, child: Text(opt));
+                      }).toList(),
+                      onChanged: (String? val) => dialogSetState(() => _selectedPaymentMode = val),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // 👉 Description Field
                   TextField(
                     controller: descController,
                     decoration: InputDecoration(
@@ -302,7 +414,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // 👉 Separate Date Picker Container
+                  // 👉 Date Picker Container
                   InkWell(
                     onTap: () async {
                       final DateTime? picked = await showDatePicker(
@@ -328,7 +440,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             children: [
                               Icon(Icons.calendar_today, size: 18, color: Color(0xFF3B82F6)),
                               SizedBox(width: 8),
-                              Text('Date):', style: TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500)),
+                              Text('Date:', style: TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500)),
                             ],
                           ),
                           Text(
@@ -341,7 +453,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // 👉 Separate Time Picker Container
+                  // 👉 Time Picker Container
                   InkWell(
                     onTap: () async {
                       final TimeOfDay? picked = await showTimePicker(
@@ -365,7 +477,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             children: [
                               Icon(Icons.access_time, size: 18, color: Color(0xFF3B82F6)),
                               SizedBox(width: 8),
-                              Text('Time):', style: TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500)),
+                              Text('Time:', style: TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500)),
                             ],
                           ),
                           Text(
@@ -392,20 +504,45 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
                 onPressed: () async {
+                  // 👉 Clean title setup (Only pure name/title)
                   String expenseTitle;
                   if (widget.categoryTitle == 'Material') {
                     expenseTitle = _selectedSubMaterial ?? 'Material';
                   } else if (widget.categoryTitle == 'Equipment') {
                     expenseTitle = _selectedSubEquipment ?? 'Equipment';
+                  } else if (widget.categoryTitle == 'Labour') {
+                    expenseTitle = titleController.text.trim();
+                  } else if (widget.categoryTitle == 'Vendor') {
+                    expenseTitle = titleController.text.trim();
+                  } else if (widget.categoryTitle == 'Other') {
+                    expenseTitle = titleController.text.trim();
                   } else {
                     expenseTitle = titleController.text.trim();
                   }
 
-                  if (amountController.text.trim().isNotEmpty && (widget.categoryTitle == 'Material' || widget.categoryTitle == 'Equipment' || expenseTitle.isNotEmpty)) {
-                    
-                    String fullDesc = qtyController.text.trim().isNotEmpty
-                        ? 'Unit: ${qtyController.text.trim()} | ${descController.text.trim()}'
-                        : descController.text.trim();
+                  if (amountController.text.trim().isNotEmpty) {
+                    // 👉 Store status details nicely inside description or hidden info if needed
+                    String detailsPrefix = '';
+                    if (widget.categoryTitle == 'Labour') {
+                      detailsPrefix = 'Status: ${_selectedLabourStatus ?? 'Present'} | Pay: ${_selectedLabourPaymentStatus ?? 'Pending'} | ';
+                    } else if (widget.categoryTitle == 'Vendor') {
+                      detailsPrefix = 'Status: ${_selectedVendorStatus ?? 'Pending'} | ';
+                    } else if (widget.categoryTitle == 'Other' && _selectedOtherCategory != null) {
+                      detailsPrefix = 'Category: $_selectedOtherCategory | ';
+                    }
+
+                    String fullDesc = '';
+                    if (widget.categoryTitle == 'Equipment' && qtyController.text.trim().isNotEmpty) {
+                      fullDesc = '$detailsPrefix Qty: ${qtyController.text.trim()} ${_selectedEquipmentUnit ?? 'Hrs'} | ${descController.text.trim()}';
+                    } else if (qtyController.text.trim().isNotEmpty) {
+                      fullDesc = '$detailsPrefix Unit: ${qtyController.text.trim()} | ${descController.text.trim()}';
+                    } else {
+                      fullDesc = '$detailsPrefix${descController.text.trim()}';
+                    }
+
+                    if (widget.categoryTitle == 'Other' && _selectedPaymentMode != null) {
+                      fullDesc = 'Mode: $_selectedPaymentMode | $fullDesc';
+                    }
 
                     String formattedDateTime = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')} ${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
 
@@ -611,7 +748,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                '${exp['desc']} • ${exp['date']}', 
+                                                exp['date'], 
                                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                                               ),
                                             ],
@@ -665,9 +802,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         backgroundColor: const Color(0xFF3B82F6),
         foregroundColor: Colors.white,
         elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => _showAddOrEditDialog(),
-        child: const Icon(Icons.add, size: 28),
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -15,6 +15,9 @@ class SiteDetailScreen extends StatefulWidget {
 class _SiteDetailScreenState extends State<SiteDetailScreen> {
   double _totalSiteExpense = 0.0;
   bool _isLoadingTotal = true;
+  
+  // 👉 Pratyek category chi total store karnyasathi map
+  final Map<String, double> _categoryTotals = {};
 
   final List<Map<String, dynamic>> _categories = const [
     {'title': 'Material', 'subtitle': 'Sand, Agg, Steel, Cement, Bitumin', 'icon': Icons.inventory_2, 'color': Colors.orange},
@@ -27,20 +30,32 @@ class _SiteDetailScreenState extends State<SiteDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSiteTotalExpense();
+    _loadSiteData();
   }
 
-  Future<void> _loadSiteTotalExpense() async {
+  // 👉 Sarv category ani grand total ekatra load karnyacha function
+  Future<void> _loadSiteData() async {
     double grandTotal = 0.0;
+    Map<String, double> tempTotals = {};
+
     for (var cat in _categories) {
-      final expenses = await DatabaseHelper.instance.getExpenses(widget.siteName, cat['title']);
+      String catTitle = cat['title'];
+      final expenses = await DatabaseHelper.instance.getExpenses(widget.siteName, catTitle);
+      double catTotal = 0.0;
+      
       for (var exp in expenses) {
-        grandTotal += double.tryParse(exp['amount'].toString()) ?? 0.0;
+        catTotal += double.tryParse(exp['amount'].toString()) ?? 0.0;
       }
+      
+      tempTotals[catTitle] = catTotal;
+      grandTotal += catTotal;
     }
+
     if (mounted) {
       setState(() {
         _totalSiteExpense = grandTotal;
+        _categoryTotals.clear();
+        _categoryTotals.addAll(tempTotals);
         _isLoadingTotal = false;
       });
     }
@@ -49,7 +64,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Modern Clean Background
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
           widget.siteName, 
@@ -105,13 +120,16 @@ class _SiteDetailScreenState extends State<SiteDetailScreen> {
             ),
           ),
 
-          // 👉 Categories List
+          // 👉 Categories List with Individual Totals
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _categories.length,
               itemBuilder: (context, index) {
                 final cat = _categories[index];
+                String catTitle = cat['title'];
+                double catTotal = _categoryTotals[catTitle] ?? 0.0;
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
@@ -131,7 +149,6 @@ class _SiteDetailScreenState extends State<SiteDetailScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        // 👉 Haptic Feedback (Light touch vibration for premium feel)
                         HapticFeedback.lightImpact();
 
                         Navigator.push(
@@ -139,19 +156,17 @@ class _SiteDetailScreenState extends State<SiteDetailScreen> {
                           MaterialPageRoute(
                             builder: (context) => CategoryDetailScreen(
                               siteName: widget.siteName,
-                              categoryTitle: cat['title'],
+                              categoryTitle: catTitle,
                             ),
                           ),
                         ).then((_) {
-                          // Parat aalyavar total expense parat load honya sathi
-                          _loadSiteTotalExpense();
+                          _loadSiteData();
                         });
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            // 👉 Modern Gradient Glow & Border Effect for Icon
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -168,24 +183,16 @@ class _SiteDetailScreenState extends State<SiteDetailScreen> {
                                   color: cat['color'].withValues(alpha: 0.3),
                                   width: 1.5,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: cat['color'].withValues(alpha: 0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
                               ),
                               child: Icon(cat['icon'], color: cat['color'], size: 26),
                             ),
                             const SizedBox(width: 16),
-                            // 👉 Title and Subtitle
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    cat['title'],
+                                    catTitle,
                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B)),
                                   ),
                                   const SizedBox(height: 4),
@@ -196,14 +203,21 @@ class _SiteDetailScreenState extends State<SiteDetailScreen> {
                                 ],
                               ),
                             ),
-                            // 👉 Sleek Arrow Icon
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                            // 👉 Pratyek category chi total amount side la disel
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '₹ $catTotal',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: cat['color'],
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                              ],
                             ),
                           ],
                         ),
